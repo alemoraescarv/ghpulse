@@ -142,7 +142,7 @@ It's early and the UI is intentionally rudimentary — I focused on function, an
 
 - ✉️ [alemoraesc@me.com](mailto:alemoraesc@me.com)
 - 💼 [LinkedIn](https://www.linkedin.com/in/alemoraesc/)
-- 🐙 [GitHub](https://github.com/alemoraesc)
+- 🐙 [GitHub](https://github.com/alemoraescarv)
 
 ## 📄 License
 
