@@ -1,0 +1,1943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GHPulse — {{ edition }}</title>
+<style>
+  /* ---- Apple system palette (light default, dark via prefers-color-scheme) ---- */
+  :root {
+    --blue: #007AFF;
+    --indigo: #5856D6;
+    --teal: #30B0C7;
+    --green: #34C759;
+    --pink: #FF2D55;
+    --orange: #FF9500;
+
+    --label: #1C1C1E;
+    --label-2: rgba(28, 28, 30, 0.62);
+    --label-3: rgba(28, 28, 30, 0.42);
+
+    --glass-bg: rgba(255, 255, 255, 0.22);
+    --glass-bg-strong: rgba(255, 255, 255, 0.34);
+    --glass-border: rgba(255, 255, 255, 0.22);
+    --glass-highlight: rgba(255, 255, 255, 0.45);
+    --glass-shadow: 0 8px 32px rgba(20, 20, 40, 0.28);
+
+    --chip-bg: rgba(255, 255, 255, 0.30);
+    --chip-border: rgba(255, 255, 255, 0.35);
+
+    --accent: var(--blue);
+    --value: #1a8f3c;
+    --down: #c9342b;
+
+    /* iOS motion: a gentle spring that overshoots past 1 (reads as physical),
+       plus the standard S-curve for everything else. */
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --blue: #0A84FF;
+      --indigo: #5E5CE6;
+      --teal: #64D2FF;
+      --green: #30D158;
+      --pink: #FF375F;
+      --orange: #FF9F0A;
+
+      --label: #F5F5F7;
+      --label-2: rgba(235, 235, 245, 0.60);
+      --label-3: rgba(235, 235, 245, 0.38);
+
+      --glass-bg: rgba(28, 28, 34, 0.52);
+      --glass-bg-strong: rgba(38, 38, 46, 0.62);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-highlight: rgba(255, 255, 255, 0.16);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+
+      --chip-bg: rgba(255, 255, 255, 0.08);
+      --chip-border: rgba(255, 255, 255, 0.14);
+
+      --accent: var(--blue);
+      --value: #30D158;
+      --down: #FF453A;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; overflow-x: hidden; max-width: 100%; }
+
+  /* ---- Cohesive Apple "aurora" field: ONE flowing blue -> indigo -> violet
+     gradient with a single restrained cool-teal accent. Calm and premium so the
+     liquid glass stays the signature; the background is quiet but still carries
+     enough real colour for the glass to visibly frost and refract. ---- */
+  body {
+    color: var(--label);
+    font: 16px/1.55 "SF Pro Display", "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 2rem 1rem 4rem;
+    min-height: 100vh;
+    background-color: #F5F6F8;
+    background-image:
+      radial-gradient(1200px 820px at 14% 6%, rgba(0, 122, 255, 0.14), transparent 62%),
+      radial-gradient(1080px 760px at 88% 16%, rgba(88, 86, 214, 0.13), transparent 60%),
+      radial-gradient(1150px 900px at 72% 98%, rgba(48, 176, 199, 0.10), transparent 60%),
+      linear-gradient(168deg, #F6F7F9 0%, #EEF0F5 100%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Softly-blurred colour field behind everything so the liquid-glass filter has
+     real high-detail colour to refract — kept in ONE hue family (blue/indigo/
+     violet) plus a single teal accent so it reads cohesive, not rainbow. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -25%;
+    z-index: -1;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    filter: blur(42px) saturate(135%);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(0, 122, 255, 0.34), transparent 34%),
+      radial-gradient(circle at 74% 24%, rgba(88, 86, 214, 0.30), transparent 32%),
+      radial-gradient(circle at 82% 74%, rgba(48, 176, 199, 0.24), transparent 34%),
+      radial-gradient(circle at 32% 82%, rgba(94, 92, 230, 0.24), transparent 32%);
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #0C0E14;
+      background-image:
+        radial-gradient(1200px 820px at 14% 6%, rgba(10, 132, 255, 0.22), transparent 62%),
+        radial-gradient(1080px 760px at 88% 16%, rgba(94, 92, 230, 0.18), transparent 60%),
+        radial-gradient(1150px 900px at 72% 98%, rgba(48, 140, 190, 0.13), transparent 60%),
+        linear-gradient(168deg, #0C0E14 0%, #101320 100%);
+    }
+    body::before {
+      filter: blur(46px) saturate(150%);
+      background-image:
+        radial-gradient(circle at 20% 22%, rgba(10, 132, 255, 0.38), transparent 30%),
+        radial-gradient(circle at 72% 26%, rgba(94, 92, 230, 0.34), transparent 28%),
+        radial-gradient(circle at 80% 72%, rgba(64, 150, 210, 0.24), transparent 30%),
+        radial-gradient(circle at 32% 78%, rgba(88, 86, 214, 0.26), transparent 28%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    body { background-attachment: scroll; }
+    .card, .rank-pill, .card:hover, .rank-pill:hover:not(:disabled) { transition: none; transform: none; }
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .repo-name a:focus-visible, .group-head:focus-visible {
+    outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 6px;
+  }
+  .wrap { max-width: min(1440px, 92vw); margin: 0 auto; }
+
+  /* ---- Liquid glass — built on the ACTUAL technique from
+     github.com/lucasromerodb/liquid-glass-effect-macos (MIT, (c) Lucas Romero)
+     and github.com/nikdelvin/liquid-glass (MIT): a blurred + SVG-distorted
+     "effect" layer sitting behind a translucent tint, with inset "shine" edge
+     highlights (the repo's exact box-shadow values). Recomposed as a ::before
+     layer so existing cards need no extra markup; degrades to frosted glass if
+     url() filters are unsupported, so it still screenshots cleanly. ---- */
+  .glass {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 22px;
+    background: var(--glass-bg);                        /* tint layer */
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow),
+      inset 2px 2px 1px 0 var(--glass-highlight),       /* shine (repo values) */
+      inset -1px -1px 1px 1px var(--glass-highlight);
+  }
+  .glass::before {                                       /* effect layer, behind content */
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    /* Vibrancy recipe from github.com/shuding/liquid-glass (1.1k★): pairing the
+       blur with contrast+brightness+saturate is what gives glass its "pop". */
+    -webkit-backdrop-filter: blur(18px) saturate(190%) contrast(1.12) brightness(1.05);
+    backdrop-filter: blur(18px) saturate(190%) contrast(1.12) brightness(1.05);
+    filter: url(#glass-distortion);                     /* real liquid distortion */
+  }
+
+  /* ---- Masthead: title block on the left, edition meta pinned top-right.
+     shadcn-style hierarchy — one strong title, a quiet muted meta column. ---- */
+  header.masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.4rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .masthead-title { min-width: 0; flex: 1 1 22rem; }
+  .kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 0.4rem;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.3rem, 6vw, 3.9rem);
+    line-height: 1.05;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+  }
+  h1 .edition-date {
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+  /* Right-aligned, muted "muted-foreground" meta column. */
+  .meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    gap: 0.15rem;
+    color: var(--label-2);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin: 0.35rem 0 0;
+    flex: 0 0 auto;
+    /* Subtle scrim so the meta stays legible over the aurora (no glass panel). */
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.55);
+  }
+  .meta span { white-space: nowrap; }
+  .meta strong { color: var(--label); font-weight: 600; }
+  .kicker { text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5); }
+  @media (prefers-color-scheme: dark) {
+    .meta { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+    .kicker { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+  }
+  /* On narrow screens the meta stacks under the title, left-aligned. */
+  @media (max-width: 640px) {
+    header.masthead { gap: 0.7rem; }
+    .masthead-title { flex-basis: 100%; }
+    .meta {
+      align-items: flex-start;
+      text-align: left;
+      margin-top: 0.2rem;
+      flex-basis: 100%;
+    }
+  }
+
+  /* ---- Top chat / "ask this week" bar (grounded local-LLM Q&A) ---- */
+  .ask {
+    margin: 0 0 1.3rem;
+    padding: 0.9rem 1rem 1rem;
+  }
+  .ask-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--label);
+    margin: 0 0 0.6rem 0.15rem;
+  }
+  .ask-label .ask-avatar {
+    font-size: 1.05rem;
+    filter: drop-shadow(0 1px 2px rgba(88, 86, 214, 0.35));
+  }
+  .ask-form { display: flex; gap: 0.55rem; align-items: stretch; }
+  .ask-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    appearance: none;
+    border: 1px solid var(--chip-border);
+    background: var(--glass-bg-strong);
+    color: var(--label);
+    font: inherit;
+    font-size: 0.95rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .ask-input::placeholder { color: var(--label-3); }
+  .ask-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.22);
+  }
+  .ask-btn {
+    appearance: none;
+    border: 0;
+    flex: none;
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #fff;
+    padding: 0.6rem 1.3rem;
+    border-radius: 14px;
+    cursor: pointer;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    box-shadow: 0 2px 12px rgba(0, 122, 255, 0.35);
+    transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .ask-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0, 122, 255, 0.42); }
+  .ask-btn:active { transform: translateY(0); }
+  .ask-btn:disabled { opacity: 0.6; cursor: progress; box-shadow: none; transform: none; }
+  .ask-answer { margin-top: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .ask-answer:empty { display: none; }
+
+  /* ---- Two-stage live search results (cohort + GitHub) ---- */
+  .search-results { margin-top: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .search-results:empty { display: none; }
+  .search-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0.35rem 0 0.1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--label-2);
+    text-transform: uppercase;
+  }
+  .search-head .count { font-weight: 600; opacity: 0.8; }
+  .search-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.6rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    min-width: 0;
+  }
+  .search-row .repo-link { font-weight: 600; color: var(--accent); flex: none; }
+  .search-row .repo-blurb {
+    color: var(--label-2);
+    font-size: 0.86rem;
+    min-width: 0;
+    flex: 1 1 12rem;
+  }
+  .search-row .repo-pills { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-left: auto; }
+  .search-row .cohort-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.06rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--green);
+    border: 1px solid rgba(52, 199, 89, 0.35);
+    background: rgba(52, 199, 89, 0.12);
+  }
+  .search-gh-btn, .search-more-btn {
+    appearance: none;
+    align-self: flex-start;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.42rem 1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+  }
+  .search-gh-btn.prominent {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    box-shadow: 0 2px 10px rgba(0, 122, 255, 0.35);
+  }
+  .search-gh-btn:hover, .search-more-btn:hover { transform: translateY(-1px); }
+  .search-gh-btn:disabled, .search-more-btn:disabled { opacity: 0.6; cursor: progress; }
+  .search-note { color: var(--label-3); font-size: 0.78rem; margin: 0.2rem 0 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .search-gh-btn:hover, .search-more-btn:hover { transform: none; }
+  }
+
+  /* Chat bubbles (assistant + user) shared with the explainer's opening turn. */
+  .chat-turn { display: flex; gap: 0.6rem; align-items: flex-start; }
+  .chat-turn.user { flex-direction: row-reverse; }
+  .chat-avatar {
+    flex: none;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--chip-border);
+    box-shadow: 0 1px 4px rgba(20, 20, 40, 0.2);
+  }
+  .chat-bubble {
+    min-width: 0;
+    max-width: 100%;
+    padding: 0.7rem 0.95rem;
+    border-radius: 16px;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: var(--label);
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+  .chat-turn.assistant .chat-bubble { border-top-left-radius: 5px; }
+  .chat-turn.user .chat-bubble {
+    border-top-right-radius: 5px;
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+  }
+  .chat-cited {
+    margin: 0.4rem 0 0;
+    color: var(--label-3);
+    font-size: 0.76rem;
+  }
+  .chat-note {
+    color: var(--label-2);
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
+  .chat-note code {
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    border-radius: 6px;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.85em;
+  }
+  /* Typing indicator (three pulsing dots). */
+  .typing { display: inline-flex; gap: 0.25rem; align-items: center; }
+  .typing i {
+    width: 0.4rem; height: 0.4rem; border-radius: 50%;
+    background: var(--label-3);
+    animation: typing-bounce 1.2s infinite ease-in-out both;
+  }
+  .typing i:nth-child(2) { animation-delay: 0.15s; }
+  .typing i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typing-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+    40% { transform: translateY(-0.22rem); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .typing i { animation: none; opacity: 0.7; }
+    .ask-btn:hover { transform: none; }
+  }
+
+  /* ---- Edition timeline: horizontal week-by-week navigator (glass strip) ---- */
+  .edition-timeline {
+    margin: 0 0 1.3rem;
+    padding: 0.85rem 1rem 0.75rem;
+  }
+  .edition-timeline .tl-label {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--label-2);
+    margin: 0 0 0.6rem 0.15rem;
+  }
+  .tl-track {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+    padding: 0.2rem 0.1rem 0.15rem;
+  }
+  .tl-track::-webkit-scrollbar { display: none; }
+  /* The connecting line runs behind the nodes, centred on the node dots. */
+  .tl-track::before {
+    content: "";
+    position: absolute;
+    left: 1.4rem;
+    right: 1.4rem;
+    top: 0.62rem;
+    height: 2px;
+    background: linear-gradient(to right, var(--blue), var(--indigo));
+    opacity: 0.5;
+    border-radius: 2px;
+  }
+  .tl-node {
+    position: relative;
+    flex: 1 0 auto;
+    min-width: 4.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0 0.35rem;
+    text-align: center;
+    color: var(--label-2);
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+  a.tl-node:hover { text-decoration: none; transform: translateY(-2px); }
+  a.tl-node:hover .tl-date { color: var(--label); }
+  a.tl-node:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 12px; }
+  .tl-dot {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    background: var(--glass-bg-strong);
+    border: 2px solid var(--chip-border);
+    box-shadow: 0 1px 3px rgba(20, 20, 40, 0.25);
+  }
+  a.tl-node:hover .tl-dot { border-color: var(--accent); }
+  .tl-date {
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .tl-tick {
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--label-3);
+  }
+  .tl-node.current { color: var(--label); }
+  .tl-node.current .tl-dot {
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    border-color: transparent;
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.22), 0 2px 8px rgba(0, 122, 255, 0.4);
+  }
+  .tl-node.current .tl-date { color: var(--accent); font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) {
+    .tl-track { scroll-behavior: auto; }
+    a.tl-node:hover { transform: none; }
+  }
+
+  .topbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 1.3rem;
+  }
+  .backend-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.8rem;
+    color: var(--label-2);
+    border-radius: 999px;
+  }
+  .backend-pill strong { color: var(--label); font-weight: 600; }
+  .backend-pill .dot {
+    width: 0.55rem; height: 0.55rem; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.22);
+  }
+  .backend-pill a { color: var(--accent); font-weight: 600; }
+
+  /* ---- Segmented Repos / News toggle (glass pill) ---- */
+  .view-toggle {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.28rem;
+    border-radius: 999px;
+    margin: 0 0 1.6rem;
+  }
+  .view-toggle .seg {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--label-2);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.42rem 1.15rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .view-toggle .seg:hover { color: var(--label); }
+  .view-toggle .seg.active {
+    color: #fff;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    box-shadow: 0 2px 10px rgba(0, 122, 255, 0.35);
+  }
+
+  /* ---- Explainer card — the assistant's opening chat turn ---- */
+  .explainer {
+    margin: 0 0 1.6rem;
+    padding: 1.2rem 1.4rem 1.3rem;
+    border-left: 4px solid var(--indigo);
+  }
+  .explainer .explainer-head {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0 0 0.8rem;
+  }
+  .explainer .explainer-head .ask-avatar {
+    font-size: 1.15rem;
+    filter: drop-shadow(0 1px 2px rgba(88, 86, 214, 0.4));
+  }
+  .explainer h2 { margin: 0; font-size: 1.22rem; letter-spacing: -0.01em; }
+  .explainer p { margin: 0 0 0.75rem; color: var(--label); line-height: 1.6; }
+  .explainer p:last-of-type { margin-bottom: 0; }
+  .explainer .byline {
+    margin-top: 0.85rem;
+    color: var(--label-3);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  /* Follow-up question + clickable suggestion chips (invite into the top bar). */
+  .followup {
+    margin-top: 1rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid var(--glass-border);
+  }
+  .followup-q { margin: 0 0 0.6rem; color: var(--label); font-weight: 600; font-size: 0.95rem; }
+  .suggestions { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .suggest-chip {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: var(--accent);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.36rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+  }
+  .suggest-chip::before { content: "\1F4AC"; font-size: 0.85em; filter: saturate(0.9); }
+  .suggest-chip:hover {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .suggest-chip:hover { transform: none; }
+  }
+
+  section.metric-section { margin-top: 2.4rem; }
+  .section-head { margin-bottom: 1.1rem; padding-left: 0.2rem; }
+  /* A small gradient accent bar gives each section header a touch more presence. */
+  .section-head h2 {
+    margin: 0 0 0.3rem;
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: -0.028em;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section-head h2::before {
+    content: "";
+    flex: none;
+    width: 0.28rem;
+    align-self: stretch;
+    min-height: 1.35rem;
+    border-radius: 999px;
+    background: linear-gradient(180deg, var(--blue), var(--indigo));
+    box-shadow: 0 1px 6px rgba(0, 122, 255, 0.35);
+  }
+  .section-head p.subtitle { margin: 0; color: var(--label-2); font-size: 0.9rem; line-height: 1.5; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+    gap: 0.85rem;
+    align-items: start; /* cards hug their content — no stretched-out empty gaps */
+  }
+  .card {
+    padding: 0.9rem 1.05rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+    transition: transform 0.28s var(--ease-spring), box-shadow 0.28s var(--ease-standard);
+  }
+  .card:hover {
+    transform: translateY(-3px) scale(1.012);
+    box-shadow: 0 16px 44px rgba(20, 20, 40, 0.32), inset 0 1px 0 var(--glass-highlight);
+  }
+  .card-top { display: flex; align-items: baseline; gap: 0.55rem; min-width: 0; }
+  .rank {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--accent);
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    border-radius: 8px;
+    padding: 0.12rem 0.5rem;
+  }
+  .repo-name {
+    font-weight: 600;
+    font-size: 0.98rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .repo-name a { color: var(--label); }
+  .card-facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    color: var(--label-2);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--chip-border);
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.75rem;
+    color: var(--label);
+    background: var(--chip-bg);
+  }
+  .chip .dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; display: inline-block; }
+  .stars { font-variant-numeric: tabular-nums; }
+  .hype-chip {
+    color: var(--pink);
+    border-color: rgba(255, 45, 85, 0.35);
+    background: rgba(255, 45, 85, 0.12);
+    font-weight: 600;
+  }
+  .hype-chip a { color: inherit; }
+  .value {
+    color: var(--value);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+  }
+  .delta-row { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: -0.1rem; }
+  .delta-chip {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--chip-border);
+    border-radius: 999px;
+    padding: 0.04rem 0.55rem;
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--label-2);
+    background: var(--chip-bg);
+  }
+  .delta-chip.month {
+    color: var(--value);
+    border-color: rgba(52, 199, 89, 0.35);
+    background: rgba(52, 199, 89, 0.12);
+    font-weight: 600;
+  }
+  .delta-chip.down {
+    color: var(--down);
+    border-color: rgba(255, 69, 58, 0.35);
+    background: rgba(255, 69, 58, 0.12);
+  }
+  .desc {
+    margin: 0;
+    color: var(--label-2);
+    font-size: 0.85rem;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .spark-row { margin-top: 0.1rem; color: var(--accent); opacity: 0.7; }
+  svg.spark { display: block; width: 100%; max-width: 140px; height: 24px; }
+
+  /* ---- News view — grouped thematic trend cards ---- */
+  .news-feed { display: grid; gap: 1rem; }
+  .news-group { padding: 1.2rem 1.4rem 1.15rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .news-group.also { padding: 1rem 1.25rem; opacity: 0.96; }
+  .group-head {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+  .group-head h3 {
+    margin: 0;
+    font-size: 1.18rem;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
+    font-weight: 700;
+  }
+  .news-group.also .group-head h3 { font-size: 1.02rem; }
+  .group-head:hover h3 { color: var(--accent); }
+  .group-para { margin: 0; color: var(--label); font-size: 0.94rem; line-height: 1.5; }
+  .news-group.also .group-para { color: var(--label-2); font-size: 0.88rem; }
+
+  .group-repos { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.1rem; }
+  .group-repo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.6rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 12px;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    min-width: 0;
+  }
+  .group-repo .repo-link { font-weight: 600; color: var(--accent); flex: none; }
+  .group-repo .repo-blurb {
+    color: var(--label-2);
+    font-size: 0.86rem;
+    min-width: 0;
+    flex: 1 1 12rem;
+  }
+  .group-repo .repo-pills { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-left: auto; }
+
+  .empty {
+    padding: 1.3rem;
+    color: var(--label-2);
+    font-size: 0.9rem;
+    border-radius: 18px;
+    border-style: dashed;
+  }
+
+  footer {
+    margin-top: 3rem;
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--glass-border);
+    color: var(--label-2);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 1.25rem 0.75rem 3rem; }
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  /* ---- Topical tag filter bar (glass, horizontally scrollable) ---- */
+  .tag-bar-wrap { position: relative; margin: 0 0 1rem; }
+  .tag-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem;
+    border-radius: 999px;
+    overflow-x: auto;
+    scrollbar-width: none;            /* Firefox */
+    -ms-overflow-style: none;          /* old Edge */
+    scroll-behavior: smooth;
+  }
+  .tag-bar::-webkit-scrollbar { display: none; }  /* WebKit */
+  /* Right-edge fade hint that more pills are scrollable. */
+  .tag-bar-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 2.4rem;
+    pointer-events: none;
+    border-radius: 0 999px 999px 0;
+    background: linear-gradient(to right, rgba(255,255,255,0), var(--glass-bg-strong));
+  }
+  .tag-pill {
+    appearance: none;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: var(--label-2);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    flex: none;
+    padding: 0.34rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .tag-pill:hover { color: var(--label); }
+  .tag-pill .tag-count {
+    font-variant-numeric: tabular-nums;
+    opacity: 0.7;
+    margin-left: 0.25rem;
+  }
+  .tag-pill.active {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    box-shadow: 0 2px 10px rgba(0, 122, 255, 0.35);
+  }
+  .tag-pill.active .tag-count { opacity: 0.85; }
+
+  /* ---- Leaderboard rank selector (reuses the tag-pill / seg glass idiom) ---- */
+  .rank-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem;
+    margin: 0.7rem 0 0.55rem;
+    border-radius: 999px;
+  }
+  .rank-pill {
+    appearance: none;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: var(--label-2);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.1rem; /* comfortable HIG hit target */
+    padding: 0.34rem 0.95rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.2s var(--ease-standard),
+                box-shadow 0.2s ease, transform 0.24s var(--ease-spring);
+  }
+  .rank-pill:hover:not(:disabled) { color: var(--label); transform: translateY(-1px); }
+  .rank-pill:active:not(:disabled) { transform: translateY(0) scale(0.97); }
+  .rank-pill:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+  .rank-pill.active {
+    color: #fff;
+    border-color: transparent;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    box-shadow: 0 2px 10px rgba(0, 122, 255, 0.35);
+  }
+  .rank-pill:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Week/Month segmented control, shown only for windowed dims. */
+  .win-toggle {
+    display: inline-flex;
+    gap: 0.2rem;
+    margin-left: 0.35rem;
+    padding: 0.2rem;
+    border-radius: 999px;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+  }
+  .win-toggle[hidden] { display: none; }
+  .win-toggle .seg {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--label-2);
+    font: inherit;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.24rem 0.75rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .win-toggle .seg:hover:not(:disabled) { color: var(--label); }
+  .win-toggle .seg.active {
+    color: #fff;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  }
+  .win-toggle .seg:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Cards with no value for the active dimension sink to the bottom, dimmed. */
+  .card.no-metric { opacity: 0.45; }
+  .card .value.sort-value { transition: none; }
+
+  /* ---- Metric pills row (under the repo name) ---- */
+  .metric-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: -0.15rem;
+  }
+  .metric-pill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--chip-border);
+    border-radius: 999px;
+    padding: 0.06rem 0.55rem;
+    font-size: 0.74rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--label-2);
+    background: var(--chip-bg);
+    white-space: nowrap;
+  }
+  .metric-pill.stars { color: var(--label); font-weight: 600; }
+  .metric-pill.up {
+    color: var(--value);
+    border-color: rgba(52, 199, 89, 0.35);
+    background: rgba(52, 199, 89, 0.12);
+    font-weight: 600;
+  }
+  .metric-pill.down {
+    color: var(--down);
+    border-color: rgba(255, 69, 58, 0.35);
+    background: rgba(255, 69, 58, 0.12);
+    font-weight: 600;
+  }
+  .metric-pill.flat { color: var(--label-3); }
+  .metric-pill.activity { color: var(--label-2); }
+
+  /* ---- Clickable topical tag chips ---- */
+  .tag-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.1rem; }
+  .tag-chip {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: var(--label-2);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.08rem 0.55rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .tag-chip:hover { color: var(--label); background: var(--glass-bg-strong); }
+  .news-tags { display: inline-flex; gap: 0.2rem; }
+  .tag-chip.emoji-only { padding: 0.08rem 0.4rem; }
+
+  /* Filtering is display-toggle only, with an optional soft fade. */
+  .tag-hidden { display: none !important; }
+  .card, .news-group { transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.15s ease; }
+
+  [hidden] { display: none !important; }
+
+  /* ---- Gentle entrance: fade + rise the masthead / ask bar / explainer on
+     load. Cards keep their hover lift. All motion is disabled under
+     prefers-reduced-motion. ---- */
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-in {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fade-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .fade-in.d1 { animation-delay: 0.05s; }
+    .fade-in.d2 { animation-delay: 0.12s; }
+    .fade-in.d3 { animation-delay: 0.19s; }
+    @keyframes fade-rise {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Liquid-glass distortion filter — VERBATIM from
+     github.com/lucasromerodb/liquid-glass-effect-macos (MIT). Only the final
+     feDisplacementMap scale is reduced (150 -> 55) so a text-dense news page
+     stays readable while keeping the organic refraction + specular sheen. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="turbulence"/>
+    <feComponentTransfer in="turbulence" result="mapped">
+      <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+      <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+      <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+    </feComponentTransfer>
+    <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+    <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+      <fePointLight x="-200" y="-200" z="300"/>
+    </feSpecularLighting>
+    <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
+    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="55" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<div class="wrap">
+  <header class="masthead fade-in">
+    <div class="masthead-title">
+      <p class="kicker">GHPulse weekly</p>
+      <h1>What is happening in tech &mdash; <span class="edition-date">{{ edition }}</span></h1>
+    </div>
+    <p class="meta">
+      <span>Cohort: <strong>{{ cohort_size }}</strong> tracked repos</span>
+      <span>History: <strong>{{ days_of_history }}</strong> day(s)</span>
+      <span>Generated: <strong>{{ generated_at }}</strong></span>
+    </p>
+  </header>
+
+  <!-- ================= TOP CHAT / ASK-THIS-WEEK BAR ==================== -->
+  <!-- Grounded local-LLM Q&A over this week's repos. Vanilla JS talks to the
+       control panel cross-origin (see PANEL_URL below); the panel sends CORS
+       headers. Degrades gracefully with a friendly message if the panel is
+       not running. -->
+  <section class="ask glass refract fade-in d1" aria-label="Ask about this week's repos">
+    <p class="ask-label"><span class="ask-avatar">&#129504;</span> Ask about this week</p>
+    <form class="ask-form" id="ask-form" autocomplete="off">
+      <input type="text" class="ask-input" id="ask-input"
+        placeholder="Ask about this week&rsquo;s repos &mdash; e.g. which of these reduce context in agent sessions?"
+        aria-label="Ask about this week's repos">
+      <button type="submit" class="ask-btn" id="ask-btn">Ask</button>
+    </form>
+    <!-- Two-stage live search: as you type, matches from THIS week's cohort
+         appear here (tracked, offline); a button then searches GitHub live via
+         the panel. Degrades silently when the panel is not running. -->
+    <div class="search-results" id="search-results" aria-live="polite"></div>
+    <div class="ask-answer" id="ask-answer" aria-live="polite"></div>
+  </section>
+
+  {% if timeline and timeline | length > 1 %}
+  <nav class="edition-timeline glass" aria-label="Weekly editions">
+    <span class="tl-label">Recent editions</span>
+    <div class="tl-track">
+      {% for node in timeline %}
+      {% if node.is_current %}
+      <span class="tl-node current" aria-current="page" title="This edition — {{ node.edition }}">
+        <span class="tl-dot"></span>
+        <span class="tl-date">{{ node.date_label }}</span>
+        <span class="tl-tick">this wk</span>
+      </span>
+      {% else %}
+      <a class="tl-node" href="{{ node.link }}" title="Edition {{ node.edition }}">
+        <span class="tl-dot"></span>
+        <span class="tl-date">{{ node.date_label }}</span>
+        <span class="tl-tick">wk</span>
+      </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </nav>
+  {% endif %}
+
+  <div class="topbar">
+    <span class="backend-pill glass">
+      <span class="dot"></span> Backend: <strong>{{ backend_label }}</strong>
+      <a href="http://127.0.0.1:{{ panel_port }}/" rel="noopener">Open control panel &#8599;</a>
+    </span>
+  </div>
+
+  {# The "This week in tech, explained" card was removed on request — the top
+     "Ask about this week" chat bar now covers the conversational/LLM summary. #}
+
+  {% if tag_bar %}
+  <div class="tag-bar-wrap">
+    <div class="tag-bar glass" role="group" aria-label="Filter by topic">
+      <button type="button" class="tag-pill active" data-tag="all">All <span class="tag-count">{{ total_repos }}</span></button>
+      {% for t in tag_bar %}
+      <button type="button" class="tag-pill" data-tag="{{ t.id }}">{{ t.emoji }} {{ t.label }} <span class="tag-count">{{ t.count }}</span></button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="view-toggle glass" role="tablist" aria-label="Choose view">
+    <button type="button" class="seg active" data-view="repos" role="tab" aria-selected="true">Repos</button>
+    <button type="button" class="seg" data-view="news" role="tab" aria-selected="false">News</button>
+  </div>
+
+  <!-- ============================ REPOS VIEW ============================ -->
+  <div id="view-repos" role="tabpanel">
+    {% if not has_items %}
+    <div class="empty glass">No metrics to show for this edition yet. Run a snapshot or seed the demo, then re-render.</div>
+    {% endif %}
+
+    {% for section in sections %}
+    <section class="metric-section" id="{{ section.key }}">
+      <div class="section-head">
+        <h2>{{ section.title }}</h2>
+        {% if section.subtitle %}
+        <p class="subtitle">{{ section.subtitle }}</p>
+        {% endif %}
+        {% if section.key == 'leaderboard' %}
+        <!-- Reader-controlled ranking selector: pick the signal to sort by. Dims
+             that need more snapshot history render disabled with a hint. The
+             Week/Month toggle only shows for windowed dims (% growth, Stars
+             gained). All sorting happens client-side over the cards' data-*. -->
+        <div class="rank-bar glass" role="group" aria-label="Rank the leaderboard by"
+             data-dims='{{ leaderboard_dims | tojson }}' data-default="{{ leaderboard_default }}">
+          {% for p in leaderboard_pills %}
+          <button type="button" class="rank-pill" data-dim="{{ p.dim }}"
+            {% if not p.available %}disabled title="Needs ~7 days of snapshot history — fills in on the next runs"{% endif %}>{{ p.label }}</button>
+          {% endfor %}
+          <span class="win-toggle" id="win-toggle" role="group" aria-label="Window" hidden>
+            <button type="button" class="seg" data-win="week">Week</button>
+            <button type="button" class="seg" data-win="month">Month</button>
+          </span>
+        </div>
+        <p class="subtitle" id="lb-subtitle"></p>
+        {% endif %}
+      </div>
+      {% if section["items"] %}
+      <div class="grid{% if section.key == 'leaderboard' %} lb-grid{% endif %}"
+        {%- if section.key == 'leaderboard' %} id="leaderboard-grid" data-default-dim="{{ leaderboard_default }}"{% endif %}>
+        {% for item in section["items"] %}
+        <article class="card glass refract" data-tags="{{ item.tags | join(' ') }}"{% if section.key == 'leaderboard' and item.lb_data %} {{ item.lb_data }}{% endif %}>
+          <div class="card-top">
+            <span class="rank">#{{ item.rank }}</span>
+            <span class="repo-name"><a href="{{ item.url }}" rel="noopener">{{ item.full_name }}</a></span>
+          </div>
+          {% if item.metric_pills %}
+          <div class="metric-pills">
+            {% for p in item.metric_pills %}
+            <span class="metric-pill {{ p.cls }}" title="{{ p.title }}">{{ p.label }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          <div class="card-facts">
+            {% if item.language %}
+            <span class="chip"><span class="dot" style="background: {{ item.language | lang_color }};"></span>{{ item.language }}</span>
+            {% endif %}
+            <span class="value{% if section.key == 'leaderboard' %} sort-value{% endif %}">{{ item.value_label }}</span>
+          </div>
+          {% if item.description %}
+          <p class="desc">{{ item.description }}</p>
+          {% endif %}
+          {% if item.tag_meta %}
+          <div class="tag-chips">
+            {% for tid, tlabel, temoji in item.tag_meta %}
+            <button type="button" class="tag-chip" data-tag="{{ tid }}" title="Filter by {{ tlabel }}">{{ temoji }} {{ tlabel }}</button>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if item.spark %}
+          <div class="spark-row">{{ item.spark | sparkline }}</div>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty glass">Nothing qualified for this section this week.</div>
+      {% endif %}
+    </section>
+    {% endfor %}
+    <div class="empty glass filter-empty" data-empty-view="repos" data-tag="all" role="button" tabindex="0" hidden>
+      No repos tagged <span class="label"></span>. Tap to show all.
+    </div>
+  </div>
+
+  <!-- ============================ NEWS VIEW ============================= -->
+  <div id="view-news" role="tabpanel" hidden>
+    {% if news_groups %}
+    <div class="news-feed">
+      {% for g in news_groups %}
+      <article class="news-group glass refract{% if g.tag_id == '_also' %} also{% endif %}" data-tags="{{ g.data_tags }}">
+        {% if g.static_head %}
+        <div class="group-head"><h3>{{ g.headline }}</h3></div>
+        {% else %}
+        <button type="button" class="group-head" data-tag="{{ g.tag_id }}" title="Filter by {{ g.label }}">
+          <h3>{{ g.headline }}</h3>
+        </button>
+        {% endif %}
+        {% if g.paragraph %}
+        <p class="group-para">{{ g.paragraph }}</p>
+        {% endif %}
+        <div class="group-repos">
+          {% for r in g.repos %}
+          <div class="group-repo">
+            <a class="repo-link" href="{{ r.url }}" rel="noopener">{{ r.full_name }}</a>
+            {% if r.description %}<span class="repo-blurb">{{ r.description }}</span>{% endif %}
+            {% if r.pills %}
+            <span class="repo-pills">
+              {% for p in r.pills %}
+              <span class="metric-pill {{ p.cls }}" title="{{ p.title }}">{{ p.label }}</span>
+              {% endfor %}
+            </span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty glass">No trend stories for this edition yet — they appear as soon as repos start moving.</div>
+    {% endif %}
+    <div class="empty glass filter-empty" data-empty-view="news" data-tag="all" role="button" tabindex="0" hidden>
+      No trends tagged <span class="label"></span>. Tap to show all.
+    </div>
+  </div>
+
+  <footer>
+    <p>Built locally by ghpulse from daily GitHub snapshots. <a href="../index.html">All editions</a></p>
+  </footer>
+</div>
+
+<script>
+  // ================= Top chat / "Ask about this week" =================
+  // Grounded local-LLM Q&A over this week's repos. The static news page can be
+  // opened from file:// or a different localhost port than the control panel,
+  // so this calls the panel CROSS-ORIGIN — the panel sends CORS headers. It
+  // POSTs the question, polls for the result, and renders a chat bubble. If the
+  // panel is not running (fetch throws) or the answer is not grounded, it shows
+  // a friendly inline hint and never breaks the page. Suggestion chips in the
+  // explainer fill + submit this same bar so the whole page is one conversation.
+  (function () {
+    var PANEL_URL = "http://127.0.0.1:{{ panel_port }}";
+    var POLL_INTERVAL = 800;   // ms
+    var POLL_MAX = 40;         // ~32s cap
+
+    var form = document.getElementById("ask-form");
+    var input = document.getElementById("ask-input");
+    var btn = document.getElementById("ask-btn");
+    var answer = document.getElementById("ask-answer");
+    if (!form || !input || !btn || !answer) { return; }
+
+    var busy = false;
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function turn(role, avatar, inner) {
+      return '<div class="chat-turn ' + role + '">'
+        + (avatar ? '<span class="chat-avatar" aria-hidden="true">' + avatar + '</span>' : '')
+        + '<div class="chat-bubble">' + inner + '</div></div>';
+    }
+
+    function renderUser(q) {
+      return turn("user", "", esc(q));
+    }
+
+    function renderThinking() {
+      return turn("assistant", "&#129504;",
+        '<span class="typing"><i></i><i></i><i></i></span>');
+    }
+
+    function renderAnswer(text, cited) {
+      var inner = esc(text).replace(/\n/g, "<br>");
+      if (cited && cited.length) {
+        var names = cited.map(function (c) {
+          return esc(typeof c === "string" ? c : (c && (c.full_name || c.name)) || c);
+        }).filter(Boolean);
+        if (names.length) {
+          inner += '<p class="chat-cited">based on: ' + names.join(", ") + '</p>';
+        }
+      }
+      return turn("assistant", "&#129504;", inner);
+    }
+
+    function renderNote() {
+      return turn("assistant", "&#129504;",
+        '<span class="chat-note">Start the control panel to chat &mdash; run '
+        + '<code>ghpulse panel</code> in your terminal, then ask again.</span>');
+    }
+
+    function setBusy(on) {
+      busy = on;
+      btn.disabled = on;
+      input.disabled = on;
+    }
+
+    function showNote(userQ) {
+      answer.innerHTML = renderUser(userQ) + renderNote();
+    }
+
+    function poll(userQ, tries) {
+      if (tries > POLL_MAX) { showNote(userQ); setBusy(false); return; }
+      fetch(PANEL_URL + "/api/ask_edition/result", { method: "GET" })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || data.ready !== true) {
+            setTimeout(function () { poll(userQ, tries + 1); }, POLL_INTERVAL);
+            return;
+          }
+          if (data.error || data.grounded === false || data.answer == null) {
+            showNote(userQ);
+          } else {
+            answer.innerHTML = renderUser(userQ)
+              + renderAnswer(data.answer, data.cited);
+          }
+          setBusy(false);
+        })
+        .catch(function () { showNote(userQ); setBusy(false); });
+    }
+
+    function ask(question) {
+      question = String(question || "").trim();
+      if (!question || busy) { return; }
+      setBusy(true);
+      answer.innerHTML = renderUser(question) + renderThinking();
+      fetch(PANEL_URL + "/api/ask_edition", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question })
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function () { setTimeout(function () { poll(question, 1); }, POLL_INTERVAL); })
+        .catch(function () { showNote(question); setBusy(false); });
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      ask(input.value);
+    });
+    // Enter submits (native for a form; keep explicit for safety on some IMEs).
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); ask(input.value); }
+    });
+
+    // Suggestion chips in the explainer: fill the top bar and submit.
+    var chips = document.querySelectorAll(".suggest-chip[data-ask]");
+    Array.prototype.forEach.call(chips, function (chip) {
+      chip.addEventListener("click", function () {
+        var q = chip.getAttribute("data-ask") || chip.textContent || "";
+        input.value = q.trim();
+        try { input.scrollIntoView({ behavior: "smooth", block: "center" }); } catch (e) {}
+        input.focus();
+        ask(q);
+      });
+    });
+
+    // ================= Two-stage live search =================
+    // Stage 1 (as you type, debounced): matches from THIS week's cohort, served
+    // offline+synchronously by the panel (/api/search). Stage 2 (on demand):
+    // live GitHub search (/api/search_github), paginated with a client-side
+    // dedupe set, hard-stopping after page 5. Pressing Ask/Enter still runs the
+    // grounded chat above, unchanged. If the panel is down (fetch throws) the
+    // search silently no-ops and the page keeps working. All text is escaped.
+    var searchResults = document.getElementById("search-results");
+    var debounceTimer = null;
+    var lastQuery = "";
+    var gh = null;  // active GitHub-search state: {q, page, seen, rowsWrap, foot}
+
+    function relTime(iso) {
+      if (!iso) { return ""; }
+      var t = Date.parse(iso);
+      if (isNaN(t)) { return ""; }
+      var mins = Math.floor((Date.now() - t) / 60000);
+      if (mins < 1) { return "just now"; }
+      if (mins < 60) { return mins + "m ago"; }
+      var hrs = Math.floor(mins / 60);
+      if (hrs < 24) { return hrs + "h ago"; }
+      var days = Math.floor(hrs / 24);
+      if (days < 30) { return days + "d ago"; }
+      var mos = Math.floor(days / 30);
+      if (mos < 12) { return mos + "mo ago"; }
+      return Math.floor(mos / 12) + "y ago";
+    }
+    function compactNum(n) {
+      n = Number(n) || 0;
+      var a = Math.abs(n);
+      if (a >= 1e6) { return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "M"; }
+      if (a >= 1e3) { return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "k"; }
+      return String(Math.round(n));
+    }
+    function pill(cls, label, title) {
+      return '<span class="metric-pill ' + cls + '" title="' + esc(title) + '">'
+        + esc(label) + '</span>';
+    }
+    function chipRow(tags) {
+      if (!tags || !tags.length) { return ""; }
+      return tags.slice(0, 3).map(function (t) {
+        return '<button type="button" class="tag-chip" data-tag="' + esc(t) + '">'
+          + esc(t) + '</button>';
+      }).join("");
+    }
+    function cohortRow(r) {
+      var pills = pill("stars", "★ " + compactNum(r.stars), "Total stars");
+      if (r.week_pct != null) {
+        var w = Number(r.week_pct);
+        var cls = w > 0 ? "up" : (w < 0 ? "down" : "flat");
+        var sym = w > 0 ? "▲" : (w < 0 ? "▼" : "▬");
+        pills += pill(cls, sym + " " + Math.abs(w) + "% wk", "Star growth this week");
+      }
+      if (r.commits_7d) {
+        pills += pill("activity", "⌁ " + r.commits_7d + " commits/wk",
+          "Commits in the last 7 days");
+      }
+      if (r.forks != null) { pills += pill("activity", "⑂ " + compactNum(r.forks), "Forks"); }
+      return '<div class="search-row">'
+        + '<a class="repo-link" href="' + esc(r.url) + '" rel="noopener">'
+        + esc(r.full_name) + '</a>'
+        + (r.description ? '<span class="repo-blurb">' + esc(r.description) + '</span>' : '')
+        + '<span class="repo-pills">' + pills + chipRow(r.tags) + '</span>'
+        + '</div>';
+    }
+    function ghRow(r) {
+      var pills = pill("stars", "★ " + compactNum(r.stars), "Total stars");
+      if (r.forks != null) { pills += pill("activity", "⑂ " + compactNum(r.forks), "Forks"); }
+      var rel = relTime(r.pushed_at);
+      if (rel) { pills += pill("activity", "updated " + rel, "Last pushed"); }
+      var badge = r.tracked ? '<span class="cohort-badge">in cohort</span>' : '';
+      return '<div class="search-row">'
+        + '<a class="repo-link" href="' + esc(r.url) + '" rel="noopener">'
+        + esc(r.full_name) + '</a>'
+        + (r.description ? '<span class="repo-blurb">' + esc(r.description) + '</span>' : '')
+        + '<span class="repo-pills">' + pills + badge + '</span>'
+        + '</div>';
+    }
+
+    function renderCohort(q, data) {
+      if (!searchResults) { return; }
+      gh = null;  // a fresh cohort search resets any open GitHub results
+      var repos = (data && data.repos) || [];
+      var total = (data && data.total != null) ? data.total : repos.length;
+      var html = '<div class="search-head">In this week’s cohort '
+        + '<span class="count">(' + total + ')</span></div>';
+      if (repos.length) {
+        html += repos.map(cohortRow).join("");
+      } else {
+        html += '<p class="search-note">Nothing in this week’s cohort matches “'
+          + esc(q) + '”.</p>';
+      }
+      var prominent = repos.length < 3;
+      html += '<button type="button" class="search-gh-btn'
+        + (prominent ? ' prominent' : '') + '">Search GitHub for more ↗</button>';
+      searchResults.innerHTML = html;
+    }
+
+    function openGitHub(q) {
+      if (!searchResults || !q) { return; }
+      var c = document.createElement("div");
+      c.className = "search-results gh-results";
+      c.innerHTML = '<div class="search-head">From GitHub — top matches</div>'
+        + '<div class="gh-rows"></div><div class="gh-foot"></div>';
+      searchResults.appendChild(c);
+      gh = { q: q, page: 0, seen: {}, rowsWrap: c.querySelector(".gh-rows"),
+             foot: c.querySelector(".gh-foot") };
+      nextGitHubPage();
+    }
+    function nextGitHubPage() {
+      if (!gh) { return; }
+      var page = gh.page + 1;
+      gh.foot.innerHTML = '<button type="button" class="search-more-btn" disabled>Searching…</button>';
+      fetch(PANEL_URL + "/api/search_github?q=" + encodeURIComponent(gh.q) + "&page=" + page)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!gh) { return; }
+          gh.page = data.page || page;
+          if (data.error) {
+            gh.foot.innerHTML = '<p class="search-note">' + esc(data.error) + '</p>';
+            return;
+          }
+          (data.repos || []).forEach(function (r) {
+            var nm = r.full_name;
+            if (!nm || gh.seen[nm]) { return; }
+            gh.seen[nm] = true;
+            gh.rowsWrap.insertAdjacentHTML("beforeend", ghRow(r));
+          });
+          if (data.has_more) {
+            gh.foot.innerHTML = '<button type="button" class="search-more-btn">Show 20 more</button>';
+          } else {
+            gh.foot.innerHTML = data.note
+              ? '<p class="search-note">' + esc(data.note) + '</p>' : '';
+          }
+        })
+        .catch(function () { if (gh && gh.foot) { gh.foot.innerHTML = ""; } });
+    }
+
+    if (searchResults) {
+      // One delegated click handler for the whole results panel.
+      searchResults.addEventListener("click", function (e) {
+        var t = e.target;
+        var chip = t.closest ? t.closest(".tag-chip") : null;
+        if (chip) {
+          if (window.ghpulseSelectTag) { window.ghpulseSelectTag(chip.getAttribute("data-tag")); }
+          return;
+        }
+        var ghBtn = t.closest ? t.closest(".search-gh-btn") : null;
+        if (ghBtn) { openGitHub(lastQuery); return; }
+        var more = t.closest ? t.closest(".search-more-btn") : null;
+        if (more && !more.disabled) { nextGitHubPage(); return; }
+      });
+
+      input.addEventListener("input", function () {
+        var v = input.value.trim();
+        lastQuery = v;
+        if (debounceTimer) { clearTimeout(debounceTimer); }
+        if (v.length < 2) { searchResults.innerHTML = ""; return; }
+        debounceTimer = setTimeout(function () {
+          fetch(PANEL_URL + "/api/search?q=" + encodeURIComponent(v) + "&limit=8")
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (v !== lastQuery) { return; }  // a newer keystroke won
+              renderCohort(v, data);
+            })
+            .catch(function () { /* panel down: silently skip, page still works */ });
+        }, 250);
+      });
+    }
+  })();
+
+  // Repos / News segmented toggle. Vanilla JS, self-contained, persists in
+  // localStorage. Default view is Repos; both views render from the same page.
+  (function () {
+    var KEY = "ghpulse-view";
+    var buttons = document.querySelectorAll(".view-toggle .seg");
+    var views = {
+      repos: document.getElementById("view-repos"),
+      news: document.getElementById("view-news")
+    };
+    function apply(view) {
+      if (view !== "news" && view !== "repos") { view = "repos"; }
+      if (views.repos) { views.repos.hidden = (view !== "repos"); }
+      if (views.news) { views.news.hidden = (view !== "news"); }
+      buttons.forEach(function (b) {
+        var on = b.getAttribute("data-view") === view;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-selected", on ? "true" : "false");
+      });
+    }
+    buttons.forEach(function (b) {
+      b.addEventListener("click", function () {
+        var view = b.getAttribute("data-view");
+        try { localStorage.setItem(KEY, view); } catch (e) {}
+        apply(view);
+      });
+    });
+    var saved = "repos";
+    try { saved = localStorage.getItem(KEY) || "repos"; } catch (e) {}
+    apply(saved);
+  })();
+
+  // Topical tag filter. Single-select, persisted under "ghpulse-tag". Toggles
+  // .tag-hidden on every [data-tags] node in BOTH views, collapses any section
+  // whose grid ends up empty, and shows a per-view empty state. Display toggling
+  // only — never animates height. Independent of the Repos/News view toggle.
+  (function () {
+    var KEY = "ghpulse-tag";
+    var pills = Array.prototype.slice.call(document.querySelectorAll(".tag-pill"));
+    var chips = Array.prototype.slice.call(document.querySelectorAll(".tag-chip, .group-head[data-tag]"));
+    var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-tags]"));
+    var sections = Array.prototype.slice.call(document.querySelectorAll("section.metric-section"));
+    var empties = Array.prototype.slice.call(document.querySelectorAll(".filter-empty"));
+
+    // Which tags actually exist in this edition (from the pill bar).
+    var known = {};
+    pills.forEach(function (p) { known[p.getAttribute("data-tag")] = true; });
+    known["all"] = true;
+
+    // Human label per tag id, scraped from a pill so the empty state can name it.
+    var labelFor = {};
+    pills.forEach(function (p) {
+      var id = p.getAttribute("data-tag");
+      if (id === "all") { return; }
+      var t = (p.textContent || "").replace(/\s+\d+\s*$/, "").trim();
+      labelFor[id] = t;
+    });
+
+    var current = "all";
+
+    function nodeHas(node, tag) {
+      var raw = node.getAttribute("data-tags") || "";
+      var list = raw.split(/\s+/);
+      for (var i = 0; i < list.length; i++) { if (list[i] === tag) { return true; } }
+      return false;
+    }
+
+    function apply(tag) {
+      if (!known[tag]) { tag = "all"; }
+      current = tag;
+
+      nodes.forEach(function (n) {
+        var show = (tag === "all") || nodeHas(n, tag);
+        n.classList.toggle("tag-hidden", !show);
+      });
+
+      // Collapse sections (Repos view) whose grid has no visible card.
+      sections.forEach(function (sec) {
+        var cards = sec.querySelectorAll(".card");
+        var visible = 0;
+        for (var i = 0; i < cards.length; i++) {
+          if (!cards[i].classList.contains("tag-hidden")) { visible++; }
+        }
+        // Only collapse sections that actually hold cards.
+        if (cards.length > 0) { sec.hidden = (visible === 0); }
+      });
+
+      // Per-view empty state: shown when a view has zero visible items.
+      var repoCards = document.querySelectorAll("#view-repos .card");
+      var newsItems = document.querySelectorAll("#view-news .news-group");
+      var repoVisible = 0, newsVisible = 0, i;
+      for (i = 0; i < repoCards.length; i++) {
+        if (!repoCards[i].classList.contains("tag-hidden")) { repoVisible++; }
+      }
+      for (i = 0; i < newsItems.length; i++) {
+        if (!newsItems[i].classList.contains("tag-hidden")) { newsVisible++; }
+      }
+      var name = labelFor[tag] || tag;
+      empties.forEach(function (el) {
+        var view = el.getAttribute("data-empty-view");
+        var count = (view === "news") ? newsVisible : repoVisible;
+        var total = (view === "news") ? newsItems.length : repoCards.length;
+        var lbl = el.querySelector(".label");
+        if (lbl) { lbl.textContent = name; }
+        el.hidden = !(tag !== "all" && total > 0 && count === 0);
+      });
+
+      // Reflect active state on the pill bar.
+      pills.forEach(function (p) {
+        p.classList.toggle("active", p.getAttribute("data-tag") === tag);
+      });
+    }
+
+    function selectTag(tag) {
+      // Clicking the already-active tag returns to All.
+      if (tag !== "all" && tag === current) { tag = "all"; }
+      if (!known[tag]) { tag = "all"; }
+      try { localStorage.setItem(KEY, tag); } catch (e) {}
+      apply(tag);
+    }
+    // Expose so the live-search results' tag chips can reuse the SAME filter.
+    try { window.ghpulseSelectTag = selectTag; } catch (e) {}
+
+    pills.forEach(function (p) {
+      p.addEventListener("click", function () { selectTag(p.getAttribute("data-tag")); });
+    });
+    chips.forEach(function (c) {
+      c.addEventListener("click", function () { selectTag(c.getAttribute("data-tag")); });
+    });
+    empties.forEach(function (el) {
+      el.addEventListener("click", function () { selectTag("all"); });
+      el.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); selectTag("all"); }
+      });
+    });
+
+    var saved = "all";
+    try { saved = localStorage.getItem(KEY) || "all"; } catch (e) {}
+    if (!known[saved]) { saved = "all"; }
+    apply(saved);
+  })();
+
+  // ===================== Leaderboard multi-dimension sorter =====================
+  // Vanilla, self-contained, offline. Re-ranks the leaderboard cards client-side
+  // by whichever dimension the reader picks (momentum, % growth, stars gained,
+  // forks, commits, most-starred) and, for windowed dims, by Week/Month. Reads
+  // each card's data-* metric attributes; a MISSING attribute means the metric is
+  // genuinely unavailable, so that card sinks to the bottom (dimmed, rank "—").
+  // Sorting only re-appends nodes + rewrites the .sort-value / .rank text, so it
+  // composes cleanly with the tag filter (which toggles .tag-hidden). Persists to
+  // localStorage; default dimension comes from the server (data-default-dim).
+  (function () {
+    var DIM_KEY = "ghpulse-rank";
+    var WIN_KEY = "ghpulse-rank-win";
+    var grid = document.getElementById("leaderboard-grid");
+    var bar = document.querySelector(".rank-bar");
+    if (!grid || !bar) { return; }
+
+    var META = {};
+    try { META = JSON.parse(bar.getAttribute("data-dims") || "{}"); } catch (e) { META = {}; }
+    var defaultDim = grid.getAttribute("data-default-dim") || "momentum";
+    var pills = Array.prototype.slice.call(bar.querySelectorAll(".rank-pill"));
+    var winToggle = document.getElementById("win-toggle");
+    var winButtons = winToggle
+      ? Array.prototype.slice.call(winToggle.querySelectorAll(".seg")) : [];
+    var subtitle = document.getElementById("lb-subtitle");
+    var cards = Array.prototype.slice.call(grid.querySelectorAll(".card"));
+
+    var WINDOWED = { growth: true, gained: true };
+    var SUBTITLES = {
+      momentum: "Sorted by momentum — z-scored star velocity vs. peers of similar size.",
+      growth: "Sorted by percentage star growth over the selected window.",
+      gained: "Sorted by absolute stars added over the selected window.",
+      forks: "Sorted by forks gained this week.",
+      commits: "Sorted by commits pushed in the last 7 days.",
+      stars: "Sorted by total stars — the biggest repos in the cohort."
+    };
+
+    function dimAvailable(dim) {
+      var d = META[dim];
+      // Absent metadata -> assume available (forks/stars are always on).
+      return !(d && d.available === false);
+    }
+    function monthAvailable(dim) {
+      var d = META[dim];
+      return !!(d && d.month);
+    }
+    function numAttr(card, attr) {
+      var v = card.getAttribute(attr);
+      if (v === null || v === "") { return null; }
+      var f = parseFloat(v);
+      return isNaN(f) ? null : f;
+    }
+    function signed(n, dp) {
+      var s = (n >= 0 ? "+" : "") + n.toFixed(dp);
+      return s;
+    }
+    function intStr(n) {
+      try { return Math.round(n).toLocaleString("en-US"); }
+      catch (e) { return String(Math.round(n)); }
+    }
+    function compact(n) {
+      var a = Math.abs(n);
+      if (a >= 1000000) { return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M"; }
+      if (a >= 1000) { return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k"; }
+      return String(Math.round(n));
+    }
+
+    // Sort value for a card under (dim, win); null = unavailable (sink).
+    function val(card, dim, win) {
+      switch (dim) {
+        case "momentum": return numAttr(card, "data-momentum");
+        case "growth":
+          return numAttr(card, win === "month" ? "data-growth-mo" : "data-growth-wk");
+        case "gained":
+          return numAttr(card, win === "month" ? "data-gained-mo" : "data-gained-wk");
+        case "forks": return numAttr(card, "data-fork-delta-wk");
+        case "commits": {
+          var c = numAttr(card, "data-commits");
+          return (c === null || c <= 0) ? null : c;
+        }
+        case "stars": return numAttr(card, "data-stars");
+      }
+      return null;
+    }
+
+    // Display string for the .sort-value span; null when unavailable.
+    function fmt(card, dim, win) {
+      if (val(card, dim, win) === null && dim !== "momentum" && dim !== "forks"
+          && dim !== "commits" && dim !== "stars") {
+        return null;
+      }
+      switch (dim) {
+        case "momentum": {
+          var z = numAttr(card, "data-momentum") || 0;
+          var v = numAttr(card, "data-velocity") || 0;
+          return "z " + signed(z, 2) + " · " + intStr(v) + " ★/day";
+        }
+        case "growth": {
+          var g = val(card, dim, win);
+          if (g === null) { return null; }
+          return signed(g, 1) + "% " + (win === "month" ? "mo" : "wk");
+        }
+        case "gained": {
+          var n = val(card, dim, win);
+          if (n === null) { return null; }
+          return "+" + intStr(n) + " ★ this " + (win === "month" ? "month" : "week");
+        }
+        case "forks": {
+          var d = numAttr(card, "data-fork-delta-wk") || 0;
+          var t = numAttr(card, "data-forks") || 0;
+          return "+" + intStr(d) + " forks/wk (" + compact(t) + " total)";
+        }
+        case "commits": {
+          var cc = numAttr(card, "data-commits") || 0;
+          var cg = numAttr(card, "data-commit-growth-wk");
+          var s = intStr(cc) + " commits/wk";
+          if (cg !== null) { s += " · " + signed(cg, 0) + "% vs last wk"; }
+          return s;
+        }
+        case "stars":
+          return "★ " + compact(numAttr(card, "data-stars") || 0);
+      }
+      return "";
+    }
+
+    function apply(dim, win) {
+      if (!dimAvailable(dim)) { dim = defaultDim; }
+      var windowed = !!WINDOWED[dim];
+      if (!windowed) { win = "week"; }
+      if (win === "month" && !monthAvailable(dim)) { win = "week"; }
+
+      // Stable sort: values desc, unavailable (null) sink to the bottom.
+      var decorated = cards.map(function (card, i) {
+        return { card: card, i: i, v: val(card, dim, win) };
+      });
+      decorated.sort(function (a, b) {
+        var an = a.v === null, bn = b.v === null;
+        if (an && bn) { return a.i - b.i; }
+        if (an) { return 1; }
+        if (bn) { return -1; }
+        if (b.v !== a.v) { return b.v - a.v; }
+        return a.i - b.i;
+      });
+
+      var rank = 0;
+      decorated.forEach(function (d) {
+        var card = d.card;
+        grid.appendChild(card);  // re-append in sorted order
+        var valEl = card.querySelector(".value.sort-value");
+        var rankEl = card.querySelector(".rank");
+        if (d.v === null) {
+          card.classList.add("no-metric");
+          if (rankEl) { rankEl.textContent = "—"; }
+          if (valEl) {
+            valEl.textContent = windowed
+              ? ("no " + (win === "month" ? "monthly" : "weekly") + " data yet")
+              : "no data yet";
+          }
+        } else {
+          card.classList.remove("no-metric");
+          rank += 1;
+          if (rankEl) { rankEl.textContent = "#" + rank; }
+          if (valEl) {
+            var text = fmt(card, dim, win);
+            if (text !== null) { valEl.textContent = text; }
+          }
+        }
+      });
+
+      // Reflect selector state.
+      pills.forEach(function (p) {
+        p.classList.toggle("active", p.getAttribute("data-dim") === dim);
+      });
+      if (winToggle) {
+        winToggle.hidden = !windowed;
+        winButtons.forEach(function (b) {
+          var w = b.getAttribute("data-win");
+          b.classList.toggle("active", w === win);
+          if (w === "month") {
+            var ok = monthAvailable(dim);
+            b.disabled = !ok;
+            b.title = ok ? "" : "Needs ~30 days of history";
+          }
+        });
+      }
+      if (subtitle) { subtitle.textContent = SUBTITLES[dim] || ""; }
+
+      try {
+        localStorage.setItem(DIM_KEY, dim);
+        localStorage.setItem(WIN_KEY, win);
+      } catch (e) {}
+    }
+
+    var curDim = defaultDim, curWin = "week";
+    try {
+      var sd = localStorage.getItem(DIM_KEY);
+      if (sd && dimAvailable(sd)) { curDim = sd; }
+      var sw = localStorage.getItem(WIN_KEY);
+      if (sw === "month" || sw === "week") { curWin = sw; }
+    } catch (e) {}
+
+    pills.forEach(function (p) {
+      p.addEventListener("click", function () {
+        if (p.disabled) { return; }
+        curDim = p.getAttribute("data-dim");
+        apply(curDim, curWin);
+      });
+    });
+    winButtons.forEach(function (b) {
+      b.addEventListener("click", function () {
+        if (b.disabled) { return; }
+        curWin = b.getAttribute("data-win");
+        apply(curDim, curWin);
+      });
+    });
+
+    apply(curDim, curWin);
+  })();
+</script>
+
+</body>
+</html>

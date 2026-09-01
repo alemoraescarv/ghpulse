@@ -1,0 +1,42 @@
+# --- secrets / local config (NEVER commit) ---
+.env
+*.env
+.config/
+env
+
+# --- virtualenvs ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- ghpulse runtime data (DB, scanned repos, rendered site, caches) ---
+.ghpulse/
+.ghpulse-real/
+.ghpulse-*/
+*.db
+*.db-wal
+*.db-shm
+site/
+http_cache/
+
+# --- logs ---
+logs/
+*.log
+
+# --- python build / cache ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- os / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GHPulse — Editions</title>
+<style>
+  :root {
+    --blue: #007AFF;
+    --indigo: #5856D6;
+    --teal: #30B0C7;
+    --label: #1C1C1E;
+    --label-2: rgba(28, 28, 30, 0.62);
+    --label-3: rgba(28, 28, 30, 0.42);
+    --glass-bg: rgba(255, 255, 255, 0.22);
+    --glass-bg-strong: rgba(255, 255, 255, 0.34);
+    --glass-border: rgba(255, 255, 255, 0.22);
+    --glass-highlight: rgba(255, 255, 255, 0.45);
+    --glass-shadow: 0 8px 32px rgba(20, 20, 40, 0.28);
+    --chip-bg: rgba(255, 255, 255, 0.30);
+    --chip-border: rgba(255, 255, 255, 0.35);
+    --accent: var(--blue);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --blue: #0A84FF;
+      --indigo: #5E5CE6;
+      --teal: #64D2FF;
+      --label: #F5F5F7;
+      --label-2: rgba(235, 235, 245, 0.60);
+      --label-3: rgba(235, 235, 245, 0.38);
+      --glass-bg: rgba(28, 28, 34, 0.52);
+      --glass-bg-strong: rgba(38, 38, 46, 0.62);
+      --glass-border: rgba(255, 255, 255, 0.14);
+      --glass-highlight: rgba(255, 255, 255, 0.16);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+      --chip-bg: rgba(255, 255, 255, 0.08);
+      --chip-border: rgba(255, 255, 255, 0.14);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  /* Same cohesive blue -> indigo -> violet aurora + one teal accent as editions. */
+  body {
+    color: var(--label);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 2rem 1rem 4rem;
+    min-height: 100vh;
+    background-color: #F5F6F8;
+    background-image:
+      radial-gradient(1200px 820px at 14% 6%, rgba(0, 122, 255, 0.14), transparent 62%),
+      radial-gradient(1080px 760px at 88% 16%, rgba(88, 86, 214, 0.13), transparent 60%),
+      radial-gradient(1150px 900px at 72% 98%, rgba(48, 176, 199, 0.10), transparent 60%),
+      linear-gradient(168deg, #F6F7F9 0%, #EEF0F5 100%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -25%;
+    z-index: -1;
+    pointer-events: none;
+    background-repeat: no-repeat;
+    filter: blur(42px) saturate(135%);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(0, 122, 255, 0.34), transparent 34%),
+      radial-gradient(circle at 74% 24%, rgba(88, 86, 214, 0.30), transparent 32%),
+      radial-gradient(circle at 82% 74%, rgba(48, 176, 199, 0.24), transparent 34%),
+      radial-gradient(circle at 32% 82%, rgba(94, 92, 230, 0.24), transparent 32%);
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #0C0E14;
+      background-image:
+        radial-gradient(1200px 820px at 14% 6%, rgba(10, 132, 255, 0.22), transparent 62%),
+        radial-gradient(1080px 760px at 88% 16%, rgba(94, 92, 230, 0.18), transparent 60%),
+        radial-gradient(1150px 900px at 72% 98%, rgba(48, 140, 190, 0.13), transparent 60%),
+        linear-gradient(168deg, #0C0E14 0%, #101320 100%);
+    }
+    body::before {
+      filter: blur(46px) saturate(150%);
+      background-image:
+        radial-gradient(circle at 20% 22%, rgba(10, 132, 255, 0.38), transparent 30%),
+        radial-gradient(circle at 72% 26%, rgba(94, 92, 230, 0.34), transparent 28%),
+        radial-gradient(circle at 80% 72%, rgba(64, 150, 210, 0.24), transparent 30%),
+        radial-gradient(circle at 32% 78%, rgba(88, 86, 214, 0.26), transparent 28%);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) { body { background-attachment: scroll; } }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .glass {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-highlight);
+  }
+  .kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 0 0 0.4rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  }
+  h1 {
+    margin: 0 0 0.4rem;
+    font-size: clamp(1.7rem, 4.4vw, 2.4rem);
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+  p.lede {
+    margin: 0 0 1.8rem;
+    color: var(--label-2);
+    font-size: 0.92rem;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+  }
+  @media (prefers-color-scheme: dark) {
+    .kicker, p.lede { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+  }
+
+  /* ---- Vertical week timeline: editions as an ordered sequence of weeks ---- */
+  .timeline { position: relative; margin: 0; padding: 0.4rem 0 0; list-style: none; }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 0.62rem;
+    top: 0.9rem;
+    bottom: 0.9rem;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--blue), var(--indigo));
+    opacity: 0.5;
+    border-radius: 2px;
+  }
+  .tl-item { position: relative; margin: 0 0 0.7rem; padding-left: 2.1rem; }
+  .tl-item::before {
+    content: "";
+    position: absolute;
+    left: 0.28rem;
+    top: 1.35rem;
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 50%;
+    background: var(--glass-bg-strong);
+    border: 2px solid var(--chip-border);
+    box-shadow: 0 1px 3px rgba(20, 20, 40, 0.25);
+  }
+  .tl-item.latest::before {
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    border-color: transparent;
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.20), 0 2px 8px rgba(0, 122, 255, 0.4);
+  }
+  .tl-item a {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.85rem 1.1rem;
+    color: var(--label);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+  }
+  .tl-item a:hover {
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 40px rgba(20, 20, 40, 0.32), inset 0 1px 0 var(--glass-highlight);
+  }
+  .tl-item .tl-day { font-size: 1.02rem; }
+  .tl-item .tl-full { color: var(--label-3); font-weight: 500; font-size: 0.82rem; }
+  .tl-item .arrow { color: var(--label-2); font-weight: 400; margin-left: auto; }
+  .tl-item .badge {
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: linear-gradient(120deg, var(--blue), var(--indigo));
+    border-radius: 999px;
+    padding: 0.14rem 0.6rem;
+    margin-left: auto;
+  }
+  .tl-item .badge + .arrow { margin-left: 0.5rem; }
+  @media (prefers-reduced-motion: reduce) { .tl-item a:hover { transform: none; } }
+
+  .empty {
+    padding: 1.3rem;
+    color: var(--label-2);
+    font-size: 0.9rem;
+    border-style: dashed;
+  }
+  footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+    color: var(--label-2);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <p class="kicker">GHPulse</p>
+  <h1>What is happening in tech</h1>
+  <p class="lede">Weekly editions built from daily GitHub snapshots, newest first — one node per week.</p>
+
+  {% if rows %}
+  <ul class="timeline">
+    {% for r in rows %}
+    <li class="tl-item{% if r.is_latest %} latest{% endif %}">
+      <a class="glass" href="{{ r.link }}">
+        <span class="tl-day">{{ r.date_label }}</span>
+        <span class="tl-full">{{ r.year }}</span>
+        {% if r.is_latest %}<span class="badge">Latest</span>{% else %}<span class="arrow">&rarr;</span>{% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif editions %}
+  <ul class="timeline">
+    {% for ed in editions %}
+    <li class="tl-item{% if ed == latest %} latest{% endif %}">
+      <a class="glass" href="{{ ed }}/index.html">
+        <span class="tl-day">{{ ed }}</span>
+        {% if ed == latest %}<span class="badge">Latest</span>{% else %}<span class="arrow">&rarr;</span>{% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty glass">No editions yet. Run <code>ghpulse weekly</code> or <code>ghpulse demo</code> to build one.</div>
+  {% endif %}
+
+  <footer>
+    <p>Generated locally by ghpulse. No external requests, no tracking.</p>
+  </footer>
+</div>
+
+</body>
+</html>

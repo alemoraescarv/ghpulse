@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ghpulse control panel</title>
+<style>
+  /* ---- Apple liquid-glass design tokens (self-contained, light + dark) ---- */
+  :root {
+    --blue: #007AFF; --indigo: #5856D6; --teal: #30B0C7; --green: #34C759;
+    --pink: #FF2D55; --orange: #FF9500;
+    --label: #1C1C1E; --label-2: #3a3a41; --bg: #F2F2F7;
+    --glass-bg: rgba(255,255,255,0.22);
+    --glass-border: rgba(255,255,255,0.22);
+    --glass-inset: inset 0 1px 0 rgba(255,255,255,0.45);
+    --glass-shadow: 0 8px 32px rgba(20,20,40,0.28);
+    --field-bg: rgba(255,255,255,0.55);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --blue: #0A84FF; --indigo: #5E5CE6; --teal: #64D2FF; --green: #30D158;
+      --pink: #FF375F; --orange: #FF9F0A;
+      --label: #F5F5F7; --label-2: #c7c7cf; --bg: #0B0B0F;
+      --glass-bg: rgba(28,28,34,0.52);
+      --glass-border: rgba(255,255,255,0.14);
+      --glass-inset: inset 0 1px 0 rgba(255,255,255,0.14);
+      --glass-shadow: 0 8px 32px rgba(0,0,0,0.55);
+      --field-bg: rgba(255,255,255,0.06);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--label);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg);
+    /* Soft accent "mesh" behind the glass so blur is visible. */
+    background-image:
+      radial-gradient(42rem 42rem at 12% -8%, rgba(0,122,255,0.42), transparent 60%),
+      radial-gradient(38rem 38rem at 92% 4%, rgba(88,86,214,0.40), transparent 60%),
+      radial-gradient(46rem 46rem at 78% 96%, rgba(48,176,199,0.36), transparent 62%),
+      radial-gradient(40rem 40rem at 4% 92%, rgba(255,45,85,0.30), transparent 60%),
+      linear-gradient(160deg, rgba(255,149,0,0.16), transparent 55%);
+    background-attachment: fixed;
+    padding: clamp(16px, 4vw, 40px);
+  }
+  /* Vivid tight blobs so the glass has real colour to refract (Apple look). */
+  body::before {
+    content: ""; position: fixed; inset: -25%; z-index: -1; pointer-events: none;
+    background-repeat: no-repeat; filter: blur(34px) saturate(150%);
+    background-image:
+      radial-gradient(circle at 16% 22%, rgba(0,122,255,0.60), transparent 30%),
+      radial-gradient(circle at 74% 14%, rgba(88,86,214,0.55), transparent 28%),
+      radial-gradient(circle at 88% 60%, rgba(48,176,199,0.52), transparent 30%),
+      radial-gradient(circle at 28% 78%, rgba(255,45,85,0.48), transparent 28%),
+      radial-gradient(circle at 56% 42%, rgba(255,149,0,0.44), transparent 26%),
+      radial-gradient(circle at 6% 88%, rgba(52,199,89,0.46), transparent 28%);
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-image:
+        radial-gradient(42rem 42rem at 12% -8%, rgba(10,132,255,0.34), transparent 60%),
+        radial-gradient(38rem 38rem at 92% 4%, rgba(94,92,230,0.32), transparent 60%),
+        radial-gradient(46rem 46rem at 78% 96%, rgba(100,210,255,0.24), transparent 62%),
+        radial-gradient(40rem 40rem at 4% 92%, rgba(255,55,95,0.24), transparent 60%),
+        linear-gradient(160deg, rgba(255,159,10,0.12), transparent 55%);
+    }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* Liquid glass built on github.com/lucasromerodb/liquid-glass-effect-macos (MIT):
+     effect/tint/shine layered via ::before so panels need no extra markup. */
+  .glass {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 22px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow),
+      inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+      inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+  }
+  .glass::before {
+    content: ""; position: absolute; inset: 0; z-index: -1;
+    /* Vibrancy recipe from github.com/shuding/liquid-glass (1.1k★). */
+    -webkit-backdrop-filter: blur(18px) saturate(190%) contrast(1.12) brightness(1.05);
+    backdrop-filter: blur(18px) saturate(190%) contrast(1.12) brightness(1.05);
+    filter: url(#glass);
+  }
+  /* Progressive refraction: gated so removing it changes nothing structural. */
+  @supports (backdrop-filter: url(#glass)) {
+    .glass.refract {
+      -webkit-backdrop-filter: blur(24px) saturate(180%) url(#glass);
+      backdrop-filter: blur(24px) saturate(180%) url(#glass);
+    }
+  }
+  header.glass {
+    padding: 22px 24px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .logo {
+    width: 42px; height: 42px; border-radius: 13px; flex: none;
+    background: linear-gradient(135deg, var(--blue), var(--indigo));
+    box-shadow: var(--glass-inset), 0 4px 14px rgba(0,122,255,0.4);
+    display: grid; place-items: center; color: #fff; font-size: 22px;
+  }
+  h1 { font-size: 30px; font-weight: 700; margin: 0; letter-spacing: -0.03em; }
+  .sub { margin: 2px 0 0; color: var(--label-2); font-size: 13px; }
+  .card {
+    padding: 20px 22px;
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--label-2); margin: 0 0 14px;
+  }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .spread { justify-content: space-between; }
+  /* Status pills */
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    background: var(--field-bg); border: 1px solid var(--glass-border);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--label-2); }
+  .dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot.off { background: var(--pink); }
+  .dot.busy { background: var(--orange); box-shadow: 0 0 8px var(--orange); }
+  /* Segmented backend picker (glass pill) */
+  .seg {
+    display: inline-flex; padding: 4px; gap: 4px; border-radius: 14px;
+    background: var(--field-bg); border: 1px solid var(--glass-border);
+  }
+  .seg button {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 600;
+    color: var(--label); background: transparent;
+    padding: 9px 16px; border-radius: 11px; transition: all 0.18s ease;
+  }
+  .seg button.active {
+    background: linear-gradient(135deg, var(--blue), var(--indigo));
+    color: #fff; box-shadow: 0 4px 14px rgba(0,122,255,0.4), var(--glass-inset);
+  }
+  .seg button:disabled { opacity: 0.5; cursor: default; }
+  /* Buttons */
+  .btn {
+    appearance: none; cursor: pointer; font: inherit; font-weight: 600;
+    color: var(--label); padding: 11px 18px; border-radius: 13px;
+    background: var(--field-bg); border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-inset); transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  .btn:hover { filter: brightness(1.06); }
+  .btn:active { transform: scale(0.97); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--blue), var(--indigo)); color: #fff;
+    box-shadow: 0 4px 14px rgba(0,122,255,0.4), var(--glass-inset);
+  }
+  .btn.link { text-decoration: none; display: inline-block; }
+  .btn:disabled { opacity: 0.55; cursor: default; }
+  /* Ask box */
+  textarea {
+    width: 100%; min-height: 78px; resize: vertical; font: inherit;
+    color: var(--label); background: var(--field-bg);
+    border: 1px solid var(--glass-border); border-radius: 14px;
+    padding: 12px 14px; box-shadow: var(--glass-inset);
+  }
+  textarea:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .answer {
+    margin-top: 14px; padding: 14px 16px; border-radius: 14px;
+    background: var(--field-bg); border: 1px solid var(--glass-border);
+    white-space: pre-wrap; font-size: 14px; display: none;
+  }
+  .answer.show { display: block; }
+  .steps { margin: 10px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--label-2); }
+  .steps li { padding: 4px 0; border-top: 1px solid var(--glass-border); }
+  .steps li:first-child { border-top: 0; }
+  .muted { color: var(--label-2); font-size: 13px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+  .hint { font-size: 12px; color: var(--label-2); margin-top: 8px; }
+  .spin {
+    width: 15px; height: 15px; border-radius: 50%; display: inline-block;
+    border: 2px solid var(--glass-border); border-top-color: var(--blue);
+    animation: spin 0.8s linear infinite; vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <!-- Progressive-enhancement refraction filter (gated by @supports above). -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <filter id="glass" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="turbulence"/>
+      <feComponentTransfer in="turbulence" result="mapped">
+        <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+        <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+        <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+      </feComponentTransfer>
+      <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+      <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+        <fePointLight x="-200" y="-200" z="300"/>
+      </feSpecularLighting>
+      <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
+      <feDisplacementMap in="SourceGraphic" in2="softMap" scale="55" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+
+  <div class="wrap">
+    <header class="glass refract">
+      <div class="logo">◎</div>
+      <div>
+        <h1>ghpulse control panel</h1>
+        <p class="sub">Pick a backend, refresh the data, and ask the free local agent.</p>
+      </div>
+    </header>
+
+    <!-- Status -->
+    <section class="glass card">
+      <h2>Status</h2>
+      <div class="row" id="status-row">
+        <span class="pill"><span class="dot" id="dot-backend"></span><span id="backend-label">backend …</span></span>
+        <span class="pill"><span class="dot" id="dot-ollama"></span><span id="ollama-label">Ollama …</span></span>
+        <span class="pill"><span class="dot" id="dot-edition"></span><span id="edition-label">edition …</span></span>
+      </div>
+      <p class="hint" id="err-line" style="display:none;color:var(--pink)"></p>
+    </section>
+
+    <!-- Backend picker -->
+    <section class="glass card">
+      <h2>LLM backend</h2>
+      <div class="seg" id="seg">
+        <button data-backend="ollama">Local (free)</button>
+        <button data-backend="anthropic">Claude</button>
+        <button data-backend="off">Off</button>
+      </div>
+      <p class="hint">Local (free) uses Ollama on your machine — no key, no cost. Claude uses your paid Anthropic key. Off disables the explainer.</p>
+    </section>
+
+    <!-- Actions -->
+    <section class="glass card">
+      <h2>Data</h2>
+      <div class="row spread">
+        <div class="row">
+          <button class="btn primary" id="btn-refresh">Refresh data</button>
+          <a class="btn link" id="btn-news" href="/news" target="_blank" rel="noopener">Open news page ↗</a>
+        </div>
+        <span class="muted" id="refresh-note"></span>
+      </div>
+      <p class="hint">Refresh runs the weekly pipeline in the background (or re-renders the latest edition if you have no GitHub token). It is safe to keep working while it runs.</p>
+    </section>
+
+    <!-- Ask the agent -->
+    <section class="glass card">
+      <h2>Ask the agent</h2>
+      <div class="seg" id="ask-mode" style="margin-bottom:12px">
+        <button data-mode="week" class="active">Ask this week</button>
+        <button data-mode="github">Search GitHub</button>
+      </div>
+      <textarea id="ask-input" placeholder="e.g. Which repo reduces context in agentic sessions?"></textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="btn primary" id="btn-ask">Ask</button>
+        <span class="muted" id="ask-status"></span>
+      </div>
+      <div class="answer" id="answer"></div>
+      <p class="hint" id="ask-hint"><b>Ask this week</b> answers from the repos on your news page (fast, grounded — it never leaves this machine or hits the network). <b>Search GitHub</b> runs the free local agent live across all of GitHub. Both need an LLM backend (Local/Ollama or Claude) enabled above.</p>
+    </section>
+
+    <p class="muted" style="text-align:center">ghpulse · runs on your machine · <span id="port-note"></span></p>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  let askPoll = null;
+  let askMode = "week";  // default: answer from this week's repos (grounded)
+
+  // Ask-mode segmented toggle (this week | search GitHub).
+  document.querySelectorAll("#ask-mode button").forEach((b) => {
+    b.addEventListener("click", () => {
+      askMode = b.dataset.mode;
+      document.querySelectorAll("#ask-mode button").forEach((x) => {
+        x.classList.toggle("active", x.dataset.mode === askMode);
+      });
+      $("ask-input").placeholder = askMode === "week"
+        ? "e.g. Which repo reduces context in agentic sessions?"
+        : "e.g. Find fast-growing Rust web frameworks and tell me which to try first.";
+    });
+  });
+
+  function setDot(el, kind) {
+    el.className = "dot" + (kind ? " " + kind : "");
+  }
+
+  async function jget(url) {
+    const r = await fetch(url, { headers: { "Accept": "application/json" } });
+    return r.json();
+  }
+  async function jpost(url, body) {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    return r.json();
+  }
+
+  function renderStatus(s) {
+    // Backend pill
+    const backend = s.backend || "off";
+    const nice = { ollama: "Local (free)", anthropic: "Claude", off: "Off", auto: "Auto" }[backend] || backend;
+    $("backend-label").textContent = "Backend: " + nice;
+    setDot($("dot-backend"), backend === "off" ? "off" : "on");
+    // Segmented active state
+    document.querySelectorAll("#seg button").forEach((b) => {
+      b.classList.toggle("active", b.dataset.backend === backend);
+    });
+    // Ollama pill
+    $("ollama-label").textContent = "Ollama: " + (s.ollama_available ? "running" : "not detected");
+    setDot($("dot-ollama"), s.ollama_available ? "on" : "off");
+    // Edition pill
+    $("edition-label").textContent = s.latest_edition ? "Edition: " + s.latest_edition : "No edition yet";
+    setDot($("dot-edition"), s.latest_edition ? "on" : "");
+    // Busy / error
+    const refreshBtn = $("btn-refresh");
+    refreshBtn.disabled = !!s.busy;
+    refreshBtn.innerHTML = s.busy ? '<span class="spin"></span> Refreshing…' : "Refresh data";
+    $("refresh-note").textContent = s.last_refresh ? ("last refresh " + s.last_refresh) : "";
+    const err = $("err-line");
+    if (s.error) { err.style.display = "block"; err.textContent = s.error; }
+    else { err.style.display = "none"; }
+    $("port-note").textContent = s.panel_port ? ("127.0.0.1:" + s.panel_port) : "";
+  }
+
+  async function refreshStatus() {
+    try { renderStatus(await jget("/api/status")); } catch (e) { /* transient */ }
+  }
+
+  // Backend picker
+  document.querySelectorAll("#seg button").forEach((b) => {
+    b.addEventListener("click", async () => {
+      document.querySelectorAll("#seg button").forEach((x) => (x.disabled = true));
+      try { renderStatus(await jpost("/api/config", { backend: b.dataset.backend })); }
+      catch (e) { /* ignore */ }
+      document.querySelectorAll("#seg button").forEach((x) => (x.disabled = false));
+    });
+  });
+
+  // Refresh
+  $("btn-refresh").addEventListener("click", async () => {
+    $("btn-refresh").disabled = true;
+    try { await jpost("/api/refresh", {}); } catch (e) { /* ignore */ }
+    await refreshStatus();
+    const poll = setInterval(async () => {
+      const s = await jget("/api/status");
+      renderStatus(s);
+      if (!s.busy) clearInterval(poll);
+    }, 1500);
+  });
+
+  // Ask the agent (routes by mode: grounded "this week" vs live GitHub search).
+  $("btn-ask").addEventListener("click", async () => {
+    const q = $("ask-input").value.trim();
+    if (!q) { $("ask-status").textContent = "type a question first"; return; }
+    const mode = askMode;
+    const startUrl = mode === "week" ? "/api/ask_edition" : "/api/ask";
+    $("btn-ask").disabled = true;
+    $("ask-status").innerHTML = '<span class="spin"></span> ' +
+      (mode === "week" ? "reading this week…" : "thinking…");
+    $("answer").classList.remove("show");
+    try {
+      const r = await jpost(startUrl, { question: q });
+      if (!r.started) {
+        $("ask-status").textContent = r.error || "busy — try again in a moment";
+        $("btn-ask").disabled = false;
+        return;
+      }
+    } catch (e) {
+      $("ask-status").textContent = "could not reach the panel";
+      $("btn-ask").disabled = false;
+      return;
+    }
+    if (askPoll) clearInterval(askPoll);
+    askPoll = setInterval(() => pollAsk(mode), 1400);
+  });
+
+  async function pollAsk(mode) {
+    const url = mode === "week" ? "/api/ask_edition/result" : "/api/ask/result";
+    let r;
+    try { r = await jget(url); } catch (e) { return; }
+    if (!r.ready) return;
+    clearInterval(askPoll); askPoll = null;
+    $("btn-ask").disabled = false;
+    $("ask-status").textContent = "";
+    const a = $("answer");
+    if (mode === "week") {
+      let html = escapeHtml(r.answer || "(no answer)");
+      if (r.error && !r.answer) html = "Error: " + escapeHtml(r.error);
+      if (r.cited && r.cited.length) {
+        html += '<div class="steps"><li>based on: ' +
+          escapeHtml(r.cited.join(", ")) + "</li></div>";
+      }
+      a.innerHTML = html;
+      a.classList.add("show");
+      return;
+    }
+    const res = r.result || {};
+    let html = "";
+    if (res.answer) html += escapeHtml(res.answer);
+    if (r.error && !res.answer) html += "Error: " + escapeHtml(r.error);
+    if (res.steps && res.steps.length) {
+      html += '<ul class="steps">';
+      res.steps.forEach((st) => {
+        html += "<li><b>" + escapeHtml(st.tool || "step") + "</b> — " +
+          escapeHtml(st.result_summary || "") + "</li>";
+      });
+      html += "</ul>";
+    }
+    a.innerHTML = html || "(no answer)";
+    a.classList.add("show");
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  refreshStatus();
+  setInterval(refreshStatus, 6000);
+})();
+</script>
+</body>
+</html>
