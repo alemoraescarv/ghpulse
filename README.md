@@ -24,7 +24,7 @@
 
 ## 🤔 Why
 
-Every day I look around forums, GitHub discussions, social media and news to keep up with what other developers and companies are doing. Sometimes I just want to see what people are shipping for **context compression** or **caching** — but with all the paid content and clickbait like *"This git repo killed Nvidia"*, it's getting harder and harder to find the signal.
+Every day I look around forums, GitHub discussions, social media and news to keep up with what other developers and companies are doing. Sometimes I just want to see what people are shipping for **context compression** or **caching** — but with all the paid content and clickbait like *"This git repo killed Company A"*, it's getting harder and harder to find the signal.
 
 So I built a small program to scan GitHub, rank repos by the metrics I actually care about, and let me **talk to the results** with a small model running on my own laptop. No paid traffic, no paid LLM — I read what real builders are doing and draw my own conclusions.
 
@@ -142,7 +142,7 @@ It's early and the UI is intentionally rudimentary — I focused on function, an
 
 - ✉️ [alemoraesc@me.com](mailto:alemoraesc@me.com)
 - 💼 [LinkedIn](https://www.linkedin.com/in/alemoraesc/)
-- 🐙 [GitHub](https://github.com/alemoraesc)
+- 🐙 [GitHub](https://github.com/alemoraescarv)
 
 ## 📄 License
 
